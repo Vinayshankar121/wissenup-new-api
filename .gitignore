@@ -1,0 +1,52 @@
+# Environment Variables
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Build Output
+/target/
+/build/
+*.class
+*.jar
+*.war
+*.nar
+*.zip
+*.tar.gz
+*.rar
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Maven
+/dependency-reduced-pom.xml
+/.mvn/wrapper/maven-wrapper.jar
+/.mvn/wrapper/maven-wrapper.properties
+
+# Spring Boot
+application.properties
+application.yml
+application-*.properties
+application-*.yml
+
+# Database
+*.sql.bak
+*.db
+
+# Secrets (double-check these are never committed)
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+
+# Logs
+logs/
+*.log
+*.log.*
