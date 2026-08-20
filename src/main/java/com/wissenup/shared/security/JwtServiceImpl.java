@@ -61,9 +61,9 @@ public class JwtServiceImpl implements JwtService {
                 .parseSignedClaims(token)
                 .getPayload();
 
-            Long userId = claims.get(USER_ID, Long.class);
-            Long organizationId = claims.get(ORGANIZATION_ID, Long.class);
-            Long roleId = claims.get(ROLE_ID, Long.class);
+            Long userId = getLongClaim(claims, USER_ID);
+            Long organizationId = getLongClaim(claims, ORGANIZATION_ID);
+            Long roleId = getLongClaim(claims, ROLE_ID);
             String email = claims.getSubject();
 
             if (userId == null || organizationId == null || roleId == null ||
@@ -77,5 +77,20 @@ public class JwtServiceImpl implements JwtService {
             log.debug("JWT validation failed: {}", ex.getMessage());
             throw new IllegalArgumentException("Invalid or expired JWT token", ex);
         }
+    }
+
+    private Long getLongClaim(Claims claims, String claimName) {
+        Object value = claims.get(claimName);
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value instanceof String text && !text.isBlank()) {
+            try {
+                return Long.valueOf(text);
+            } catch (NumberFormatException ex) {
+                throw new IllegalArgumentException("JWT claim '" + claimName + "' must be numeric", ex);
+            }
+        }
+        return null;
     }
 }

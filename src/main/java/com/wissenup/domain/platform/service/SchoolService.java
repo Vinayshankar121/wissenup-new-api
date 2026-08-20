@@ -27,6 +27,14 @@ public interface SchoolService {
     SchoolDto getSchool(Long schoolId);
 
     /**
+     * Get school by its tenant organization ID.
+     *
+     * @param organizationId - Tenant organization ID
+     * @return - School DTO
+     */
+    SchoolDto getSchoolByOrganizationId(Long organizationId);
+
+    /**
      * Get school by email.
      *
      * @param email - School email

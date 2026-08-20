@@ -1,8 +1,8 @@
 package com.wissenup.shared.security;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpInputMessage;
@@ -26,8 +26,9 @@ public class TenantRequestBodyAdvice implements RequestBodyAdvice {
 
     private final ObjectMapper objectMapper;
 
-    public TenantRequestBodyAdvice() {
-        this.objectMapper = new ObjectMapper();
+    public TenantRequestBodyAdvice(ObjectMapper objectMapper) {
+        // Use Spring Boot's configured mapper, including Java time support.
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -65,6 +66,13 @@ public class TenantRequestBodyAdvice implements RequestBodyAdvice {
             JsonNode jsonNode = objectMapper.valueToTree(body);
 
             if (jsonNode instanceof ObjectNode objectNode) {
+                // Only tenant-scoped DTOs that actually declare organizationId
+                // should be rewritten. OnboardingRequest, for example, creates
+                // a new organization and intentionally has no such root field.
+                if (!objectNode.has("organizationId")) {
+                    return body;
+                }
+
                 // Inject organization_id (overwrite any client-provided value)
                 objectNode.put("organizationId", organizationId);
 

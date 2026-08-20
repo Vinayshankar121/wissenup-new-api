@@ -2,10 +2,22 @@ package com.wissenup.domain.platform.service;
 
 import com.wissenup.domain.platform.dto.SubscriptionPlanDto;
 
+import java.util.List;
+
 /**
  * Subscription plan service for retrieving and validating plans.
  */
 public interface SubscriptionService {
+
+    List<SubscriptionPlanDto> listPlans();
+
+    SubscriptionPlanDto getPlan(Long planId);
+
+    SubscriptionPlanDto createPlan(SubscriptionPlanDto request);
+
+    SubscriptionPlanDto updatePlan(Long planId, SubscriptionPlanDto request);
+
+    void deletePlan(Long planId);
 
     /**
      * Get subscription plan by code.

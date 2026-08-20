@@ -88,6 +88,11 @@ public class OtpServiceImpl implements OtpService {
     }
 
     private void sendOtpEmail(String email, String otp) {
+        if (mailFrom == null || mailFrom.isBlank()) {
+            log.warn("SMTP is not configured. Development OTP for {}: {}", email, otp);
+            return;
+        }
+
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(mailFrom);

@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -46,10 +47,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 claims = jwtService.parseAndValidate(token);
             } catch (IllegalArgumentException ex) {
-                log.debug("JWT validation failed: {}", ex.getMessage());
+                log.warn("JWT validation failed for {} {}: {}",
+                    request.getMethod(), request.getRequestURI(), ex.getMessage());
                 SecurityContextHolder.clearContext();
                 TenantContext.clear();
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write(
+                    "{\"success\":false,\"message\":\"Invalid or expired authentication token\"}"
+                );
                 return;
             }
 
@@ -58,7 +64,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // Create authentication token
             UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(claims, null, java.util.List.of());
+                new UsernamePasswordAuthenticationToken(
+                    claims,
+                    null,
+                    java.util.List.of(new SimpleGrantedAuthority("ROLE_AUTHENTICATED"))
+                );
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
             // Set in security context

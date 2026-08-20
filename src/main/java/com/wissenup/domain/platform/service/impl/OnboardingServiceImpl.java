@@ -29,6 +29,7 @@ import com.wissenup.domain.platform.repository.SchoolSettingsRepository;
 import com.wissenup.domain.platform.repository.SchoolSubscriptionRepository;
 import com.wissenup.domain.platform.repository.SubscriptionPlanRepository;
 import com.wissenup.domain.platform.service.OnboardingService;
+import com.wissenup.domain.platform.service.OnboardingEmailService;
 import com.wissenup.domain.platform.service.PlatformAuditService;
 import com.wissenup.domain.shared.entity.Organization;
 import com.wissenup.domain.shared.repository.OrganizationRepository;
@@ -61,6 +62,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final SchoolModuleRepository schoolModuleRepository;
     private final SchoolSettingsRepository schoolSettingsRepository;
     private final PlatformAuditService auditService;
+    private final OnboardingEmailService onboardingEmailService;
     private final BCryptPasswordEncoder bcryptEncoder;
 
     @Override
@@ -233,6 +235,9 @@ public class OnboardingServiceImpl implements OnboardingService {
                     "sectionsCreated", 36
                 ),
                 superAdminId);
+
+            onboardingEmailService.sendCredentials(
+                adminUser.getEmail(), school.getName(), request.getAdminUser().getPassword());
 
             // Return success
             return OnboardingResponse.builder()

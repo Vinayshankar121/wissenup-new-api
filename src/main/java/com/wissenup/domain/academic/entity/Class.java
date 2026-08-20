@@ -47,12 +47,6 @@ public class Class {
     private Integer level;
 
     /**
-     * Description/notes
-     */
-    @Column(name = "description", length = 500)
-    private String description;
-
-    /**
      * Status: ACTIVE, INACTIVE, ARCHIVED
      */
     @Column(name = "status", nullable = false, length = 20)

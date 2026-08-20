@@ -7,15 +7,19 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
 
 import java.util.List;
 
@@ -32,6 +36,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
+@EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
 public class JwtSecurityConfiguration {
 
     @Value("${app.jwt.secret}")
@@ -57,27 +62,11 @@ public class JwtSecurityConfiguration {
     }
 
     /**
-     * Create JWT authentication filter.
-     */
-    @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtService jwtService) {
-        return new JwtAuthenticationFilter(jwtService);
-    }
-
-    /**
      * Create tenant repository aspect for AOP-based tenant filtering.
      */
     @Bean
     public TenantRepositoryAspect tenantRepositoryAspect() {
         return new TenantRepositoryAspect();
-    }
-
-    /**
-     * Create tenant request body advice for automatic organization_id injection.
-     */
-    @Bean
-    public TenantRequestBodyAdvice tenantRequestBodyAdvice() {
-        return new TenantRequestBodyAdvice();
     }
 
     /**
@@ -112,30 +101,61 @@ public class JwtSecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(
         HttpSecurity http,
-        JwtAuthenticationFilter jwtAuthenticationFilter,
+        JwtService jwtService,
         CorsConfigurationSource corsConfigurationSource)
         throws Exception {
+
+        JwtAuthenticationFilter jwtAuthenticationFilter =
+            new JwtAuthenticationFilter(jwtService);
 
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(authenticationEntryPoint())
+                .accessDeniedHandler(accessDeniedHandler())
+            )
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints
                 .requestMatchers("/api/v1/auth/login", "/api/v1/auth/otp/verify", "/api/v1/auth/otp/resend").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/subscription-plans/**").permitAll()
                 .requestMatchers("/api/v1/health/**").permitAll()
+                .requestMatchers("/error").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/health/live", "/actuator/health/ready").permitAll()
                 // Protected endpoints
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            // Authenticate bearer tokens after the security context exists and
+            // immediately before Spring performs endpoint authorization.
+            .addFilterBefore(jwtAuthenticationFilter, AuthorizationFilter.class)
             .headers(headers -> headers
                 .frameOptions(frameOptions -> frameOptions.deny())
                 .xssProtection(xss -> {})
             );
 
         return http.build();
+    }
+
+    private AuthenticationEntryPoint authenticationEntryPoint() {
+        return (request, response, exception) -> {
+            response.setStatus(401);
+            response.setContentType("application/json");
+            response.getWriter().write(
+                "{\"success\":false,\"message\":\"Authentication is required\"}"
+            );
+        };
+    }
+
+    private AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, exception) -> {
+            response.setStatus(403);
+            response.setContentType("application/json");
+            response.getWriter().write(
+                "{\"success\":false,\"message\":\"Authenticated user is not allowed to perform this operation\"}"
+            );
+        };
     }
 
     /**

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +24,43 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final SubscriptionPlanRepository planRepository;
     private final SchoolSubscriptionRepository subscriptionRepository;
     private final UsageMetricRepository usageMetricRepository;
+
+    @Override
+    public List<SubscriptionPlanDto> listPlans() {
+        return planRepository.findAll().stream().map(this::convertToDto).toList();
+    }
+
+    @Override
+    public SubscriptionPlanDto getPlan(Long planId) {
+        return convertToDto(findPlan(planId));
+    }
+
+    @Override
+    @Transactional
+    public SubscriptionPlanDto createPlan(SubscriptionPlanDto request) {
+        SubscriptionPlan plan = new SubscriptionPlan();
+        applyRequest(request, plan);
+        plan.setCreated_at(LocalDateTime.now());
+        return convertToDto(planRepository.save(plan));
+    }
+
+    @Override
+    @Transactional
+    public SubscriptionPlanDto updatePlan(Long planId, SubscriptionPlanDto request) {
+        SubscriptionPlan plan = findPlan(planId);
+        applyRequest(request, plan);
+        plan.setUpdated_at(LocalDateTime.now());
+        return convertToDto(planRepository.save(plan));
+    }
+
+    @Override
+    @Transactional
+    public void deletePlan(Long planId) {
+        SubscriptionPlan plan = findPlan(planId);
+        plan.setIs_active(false);
+        plan.setUpdated_at(LocalDateTime.now());
+        planRepository.save(plan);
+    }
 
     @Override
     public SubscriptionPlanDto getPlanByCode(String code) {
@@ -97,5 +135,23 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             .trialDays(plan.getTrial_days())
             .isActive(plan.getIs_active())
             .build();
+    }
+
+    private SubscriptionPlan findPlan(Long planId) {
+        return planRepository.findById(planId)
+            .orElseThrow(() -> new ResourceNotFoundException("Plan not found: " + planId));
+    }
+
+    private void applyRequest(SubscriptionPlanDto request, SubscriptionPlan plan) {
+        plan.setCode(request.getCode());
+        plan.setName(request.getName());
+        plan.setDescription(request.getDescription());
+        plan.setMax_students(request.getMaxStudents());
+        plan.setMax_staff(request.getMaxStaff());
+        plan.setMax_users(request.getMaxUsers());
+        plan.setStorage_gb(request.getStorageGb());
+        plan.setPrice_per_month(request.getPricePerMonth());
+        plan.setTrial_days(request.getTrialDays());
+        plan.setIs_active(request.getIsActive() == null || request.getIsActive());
     }
 }

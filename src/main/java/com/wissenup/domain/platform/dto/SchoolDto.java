@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -32,4 +33,15 @@ public class SchoolDto {
     private LocalDateTime trialEndsAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String adminEmail;
+    private Long subscriptionId;
+    private Long planId;
+    private String planCode;
+    private String planName;
+    private BigDecimal monthlyPrice;
+    private LocalDateTime subscriptionStart;
+    private LocalDateTime subscriptionEnd;
+    private LocalDateTime subscriptionTrialEnd;
+    private String subscriptionStatus;
+    private Boolean autoRenew;
 }
