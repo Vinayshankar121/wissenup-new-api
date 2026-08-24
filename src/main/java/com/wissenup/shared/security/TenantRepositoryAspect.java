@@ -7,6 +7,8 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -59,6 +61,19 @@ public class TenantRepositoryAspect {
             !isVisible(optional.get())) {
             log.warn("Tenant isolation violation: Optional contains entity from different organization");
             return Optional.empty();
+        }
+
+        if (result instanceof Page<?> page && currentClaims() != null &&
+            currentClaims().organizationId() != 0L) {
+            List<Object> visible = new ArrayList<>();
+            for (Object value : page.getContent()) {
+                if (isVisible(value)) {
+                    visible.add(value);
+                } else {
+                    log.warn("Tenant isolation violation: Filtering out cross-tenant entity");
+                }
+            }
+            return new PageImpl<>(visible, page.getPageable(), visible.size());
         }
 
         if (result instanceof Iterable<?> iterable && currentClaims() != null &&

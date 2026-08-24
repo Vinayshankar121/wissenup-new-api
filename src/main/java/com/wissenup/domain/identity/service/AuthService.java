@@ -15,7 +15,7 @@ public interface AuthService {
      * @param email user email address
      * @throws com.wissenup.domain.identity.exception.AuthenticationException if email not found or user inactive
      */
-    void initiateLogin(String email);
+    void initiateLogin(String email, String password);
 
     /**
      * Step 2: Verify OTP and complete login, returning JWT token.

@@ -23,6 +23,7 @@ public class OnboardingController {
     @PostMapping("/onboard")
     public ResponseEntity<ApiResponse<OnboardingResponse>> onboard(
             @Valid @RequestBody OnboardingRequest request) {
+        SecurityContextUtil.requireSuperAdmin();
         OnboardingResponse response = onboardingService.onboardSchool(
             request, SecurityContextUtil.getCurrentUserId());
         return ResponseEntity.ok(ApiResponse.success("School onboarded successfully", response));

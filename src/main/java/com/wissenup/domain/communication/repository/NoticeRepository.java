@@ -1,0 +1,2 @@
+package com.wissenup.domain.communication.repository; import com.wissenup.domain.communication.entity.Notice; import org.springframework.data.jpa.repository.JpaRepository; import java.util.*;
+public interface NoticeRepository extends JpaRepository<Notice,Long>{Optional<Notice> findByNoticeIdAndOrganizationId(Long id,Long org);List<Notice> findAllByOrganizationIdOrderByPublishDateDescCreatedAtDesc(Long org);}

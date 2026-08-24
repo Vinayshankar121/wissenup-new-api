@@ -40,4 +40,25 @@ public class OnboardingEmailService {
                 exception);
         }
     }
+
+    public void sendStaffCredentials(String recipient, String staffName, String role, String temporaryPassword) {
+        if (mailFrom == null || mailFrom.isBlank()) {
+            log.warn("Staff credentials email not sent to {} because MAIL_USERNAME is not configured", recipient);
+            return;
+        }
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(mailFrom);
+            message.setTo(recipient);
+            message.setSubject("Welcome to WissenUp - Your staff account");
+            message.setText("Hello " + staffName + ",\n\nYour " + role
+                + " account has been created.\n\nLogin email: " + recipient
+                + "\nTemporary password: " + temporaryPassword
+                + "\n\nPlease sign in and change your password immediately.\n\nWissenUp Team");
+            mailSender.send(message);
+            log.info("Staff credentials email sent to {}", recipient);
+        } catch (Exception exception) {
+            log.error("Staff was created, but the credentials email could not be sent to {}", recipient, exception);
+        }
+    }
 }

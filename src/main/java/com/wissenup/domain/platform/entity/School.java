@@ -26,6 +26,12 @@ public class School {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private String organization_type = "SCHOOL";
+
+    private String registration_number;
+
     @Column(unique = true, nullable = false)
     private String email;
 

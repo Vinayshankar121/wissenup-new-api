@@ -3,6 +3,7 @@ package com.wissenup.domain.platform.controller;
 import com.wissenup.domain.platform.dto.SubscriptionPlanDto;
 import com.wissenup.domain.platform.service.SubscriptionService;
 import com.wissenup.shared.dto.ApiResponse;
+import com.wissenup.shared.security.SecurityContextUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,17 +36,20 @@ public class SubscriptionPlanController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<SubscriptionPlanDto>> create(@RequestBody SubscriptionPlanDto request) {
+        SecurityContextUtil.requireSuperAdmin();
         return ResponseEntity.ok(ApiResponse.success("Subscription plan created", subscriptionService.createPlan(request)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<SubscriptionPlanDto>> update(
             @PathVariable Long id, @RequestBody SubscriptionPlanDto request) {
+        SecurityContextUtil.requireSuperAdmin();
         return ResponseEntity.ok(ApiResponse.success("Subscription plan updated", subscriptionService.updatePlan(id, request)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
+        SecurityContextUtil.requireSuperAdmin();
         subscriptionService.deletePlan(id);
         return ResponseEntity.ok(ApiResponse.success("Subscription plan deactivated"));
     }

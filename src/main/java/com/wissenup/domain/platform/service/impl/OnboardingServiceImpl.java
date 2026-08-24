@@ -1,11 +1,7 @@
 package com.wissenup.domain.platform.service.impl;
 
 import com.wissenup.domain.academic.entity.AcademicYear;
-import com.wissenup.domain.academic.entity.Class;
-import com.wissenup.domain.academic.entity.Section;
 import com.wissenup.domain.academic.repository.AcademicYearRepository;
-import com.wissenup.domain.academic.repository.ClassRepository;
-import com.wissenup.domain.academic.repository.SectionRepository;
 import com.wissenup.domain.identity.entity.Role;
 import com.wissenup.domain.identity.entity.User;
 import com.wissenup.domain.identity.entity.UserRole;
@@ -23,6 +19,7 @@ import com.wissenup.domain.platform.entity.SchoolSubscription;
 import com.wissenup.domain.platform.entity.SubscriptionPlan;
 import com.wissenup.domain.platform.exception.OnboardingException;
 import com.wissenup.domain.platform.repository.ModuleRepository;
+import com.wissenup.domain.platform.repository.PlanModuleRepository;
 import com.wissenup.domain.platform.repository.SchoolModuleRepository;
 import com.wissenup.domain.platform.repository.SchoolRepository;
 import com.wissenup.domain.platform.repository.SchoolSettingsRepository;
@@ -42,11 +39,16 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.security.SecureRandom;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class OnboardingServiceImpl implements OnboardingService {
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final char[] PASSWORD_ALPHABET =
+        "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%".toCharArray();
 
     private final OrganizationRepository organizationRepository;
     private final SchoolRepository schoolRepository;
@@ -54,11 +56,10 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final UserRoleRepository userRoleRepository;
     private final RoleRepository roleRepository;
     private final AcademicYearRepository academicYearRepository;
-    private final ClassRepository classRepository;
-    private final SectionRepository sectionRepository;
     private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final SchoolSubscriptionRepository schoolSubscriptionRepository;
     private final ModuleRepository moduleRepository;
+    private final PlanModuleRepository planModuleRepository;
     private final SchoolModuleRepository schoolModuleRepository;
     private final SchoolSettingsRepository schoolSettingsRepository;
     private final PlatformAuditService auditService;
@@ -69,6 +70,11 @@ public class OnboardingServiceImpl implements OnboardingService {
     @Transactional
     public OnboardingResponse onboardSchool(OnboardingRequest request, Long superAdminId) {
         try {
+            if (schoolRepository.findByEmail(request.getSchool().getEmail()).isPresent()) {
+                throw new OnboardingException(
+                    "A school with email " + request.getSchool().getEmail() + " is already onboarded");
+            }
+
             // STEP 1: Create Organization
             Organization organization = Organization.builder()
                 .name(generateOrganizationName(request.getSchool().getEmail()))
@@ -81,6 +87,9 @@ public class OnboardingServiceImpl implements OnboardingService {
             School school = School.builder()
                 .organizationId(organization.getOrganizationId())
                 .name(request.getSchool().getName())
+                .organization_type(request.getSchool().getOrganizationType() == null
+                    ? "SCHOOL" : request.getSchool().getOrganizationType())
+                .registration_number(request.getSchool().getRegistrationNumber())
                 .email(request.getSchool().getEmail())
                 .phone(request.getSchool().getPhone())
                 .address(request.getSchool().getAddress())
@@ -97,11 +106,15 @@ public class OnboardingServiceImpl implements OnboardingService {
             school = schoolRepository.save(school);
 
             // STEP 3: Create Admin User
+            String temporaryPassword = request.getAdminUser().getPassword();
+            if (temporaryPassword == null || temporaryPassword.isBlank()) {
+                temporaryPassword = generateTemporaryPassword();
+            }
             User adminUser = User.builder()
                 .organizationId(school.getOrganizationId())
                 .email(request.getAdminUser().getEmail())
                 .phoneNumber(request.getAdminUser().getPhone())
-                .password(bcryptEncoder.encode(request.getAdminUser().getPassword()))
+                .password(bcryptEncoder.encode(temporaryPassword))
                 .status("ACTIVE")
                 .createdBy(superAdminId)
                 .build();
@@ -131,33 +144,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                 .build();
             academicYear = academicYearRepository.save(academicYear);
 
-            // STEP 6: Create Default Classes & Sections (12 classes, 3 sections each = 36 sections)
-            for (int level = 1; level <= 12; level++) {
-                Class clazz = Class.builder()
-                    .organizationId(school.getOrganizationId())
-                    .academicYearId(academicYear.getAcademicYearId())
-                    .name("Class " + level)
-                    .code("CLASS_" + level)
-                    .level(level)
-                    .status(Class.ClassStatus.ACTIVE)
-                    .createdBy(superAdminId)
-                    .build();
-                clazz = classRepository.save(clazz);
-
-                // Create sections A, B, C for each class
-                for (char sectionChar : new char[]{'A', 'B', 'C'}) {
-                    Section section = Section.builder()
-                        .organizationId(school.getOrganizationId())
-                        .classId(clazz.getClassId())
-                        .name(String.valueOf(sectionChar))
-                        .capacity(50)
-                        .currentStrength(0)
-                        .status(Section.SectionStatus.ACTIVE)
-                        .createdBy(superAdminId)
-                        .build();
-                    sectionRepository.save(section);
-                }
-            }
+            // Classes and sections are created later by the organization admin.
 
             // STEP 7: Create Subscription
             String planCode = request.getSubscriptionPlan().getCode();
@@ -168,6 +155,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                 .organization_id(school.getOrganizationId())
                 .plan_id(plan.getPlanId())
                 .started_at(LocalDateTime.now())
+                .ends_at(LocalDateTime.now().plusDays(plan.getDuration_days()))
                 .is_active(true)
                 .build();
 
@@ -182,7 +170,15 @@ public class OnboardingServiceImpl implements OnboardingService {
             subscription = schoolSubscriptionRepository.save(subscription);
 
             // STEP 8: Enable Modules Per Plan
-            List<Module> planModules = moduleRepository.findAll(); // All active modules by default
+            List<Long> planModuleIds = planModuleRepository.findAllByPlanId(plan.getPlanId()).stream()
+                .map(planModule -> planModule.getModuleId())
+                .toList();
+            List<Module> planModules = moduleRepository.findAllById(planModuleIds).stream()
+                .filter(module -> Boolean.TRUE.equals(module.getIs_active()))
+                .toList();
+            if (planModules.isEmpty()) {
+                throw new OnboardingException("No active modules are configured for onboarding");
+            }
             for (Module module : planModules) {
                 SchoolModule schoolModule = SchoolModule.builder()
                     .organization_id(school.getOrganizationId())
@@ -232,12 +228,13 @@ public class OnboardingServiceImpl implements OnboardingService {
                     "adminEmail", adminUser.getEmail(),
                     "modulesEnabled", planModules.size(),
                     "academicYearId", academicYear.getAcademicYearId(),
-                    "sectionsCreated", 36
+                    "classesCreated", 0,
+                    "sectionsCreated", 0
                 ),
                 superAdminId);
 
             onboardingEmailService.sendCredentials(
-                adminUser.getEmail(), school.getName(), request.getAdminUser().getPassword());
+                adminUser.getEmail(), school.getName(), temporaryPassword);
 
             // Return success
             return OnboardingResponse.builder()
@@ -266,6 +263,14 @@ public class OnboardingServiceImpl implements OnboardingService {
                 superAdminId);
             throw new OnboardingException("School onboarding failed: " + e.getMessage(), e);
         }
+    }
+
+    private String generateTemporaryPassword() {
+        StringBuilder password = new StringBuilder(16);
+        for (int i = 0; i < 16; i++) {
+            password.append(PASSWORD_ALPHABET[SECURE_RANDOM.nextInt(PASSWORD_ALPHABET.length)]);
+        }
+        return password.toString();
     }
 
     @Override

@@ -1,8 +1,10 @@
 package com.wissenup.domain.platform.service;
 
 import com.wissenup.domain.platform.dto.SchoolDto;
+import com.wissenup.domain.platform.dto.OrganizationUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.util.Map;
 
 /**
  * School management service for super admin operations.
@@ -66,4 +68,11 @@ public interface SchoolService {
      * @param superAdminId - Super admin ID
      */
     void updateStatus(Long schoolId, String status, Long superAdminId);
+
+    SchoolDto updateOrganization(Long organizationId, OrganizationUpdateRequest request, Long userId);
+
+    void deleteOrganization(Long organizationId, Long userId);
+
+    Map<String, Object> getOrganizationContext(Long organizationId);
+
 }

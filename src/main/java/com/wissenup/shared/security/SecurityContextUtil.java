@@ -107,7 +107,13 @@ public final class SecurityContextUtil {
      * Check if current user is SUPER_ADMIN.
      */
     public static boolean isSuperAdmin() {
-        return getCurrentOrganizationId() == 0L;
+        return Long.valueOf(0L).equals(getCurrentOrganizationId());
+    }
+
+    public static void requireSuperAdmin() {
+        if (!isSuperAdmin()) {
+            throw new AccessDeniedException("Only a platform administrator can perform this operation");
+        }
     }
 
     /**

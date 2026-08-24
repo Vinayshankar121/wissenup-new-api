@@ -19,5 +19,7 @@ public class LoginResponse {
     private Long userId;
     private Long organizationId;
     private Long roleId;
+    private String role;
+    private Long parentId;
     private String email;
 }

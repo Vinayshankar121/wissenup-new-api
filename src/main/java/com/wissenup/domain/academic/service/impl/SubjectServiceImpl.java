@@ -1,6 +1,7 @@
 package com.wissenup.domain.academic.service.impl;
 
 import com.wissenup.shared.exception.AccessDeniedException;
+import com.wissenup.shared.exception.ConflictException;
 import com.wissenup.shared.exception.ResourceNotFoundException;
 import com.wissenup.domain.academic.dto.CreateSubjectRequest;
 import com.wissenup.domain.academic.dto.SubjectDto;
@@ -27,6 +28,7 @@ public class SubjectServiceImpl implements SubjectService {
 
     @Override
     public SubjectDto createSubject(CreateSubjectRequest request, Long organizationId, Long userId) {
+        validateUniqueSubject(request.getName(), request.getCode(), organizationId, null);
         Subject entity = mapper.toEntity(request, organizationId);
         entity.setCreatedBy(userId);
         Subject saved = repository.save(entity);
@@ -46,6 +48,7 @@ public class SubjectServiceImpl implements SubjectService {
         Subject entity = repository.findById(subjectId)
                 .orElseThrow(() -> ResourceNotFoundException.notFound("Subject", subjectId));
         validateOrganizationAccess(entity.getOrganizationId(), organizationId);
+        validateUniqueSubject(request.getName(), request.getCode(), organizationId, subjectId);
 
         mapper.updateEntity(request, entity);
         entity.setUpdatedBy(userId);
@@ -82,6 +85,19 @@ public class SubjectServiceImpl implements SubjectService {
         if (!entityOrgId.equals(requestOrgId)) {
             throw new AccessDeniedException("Access denied: organization mismatch");
         }
+    }
+
+    private void validateUniqueSubject(String name, String code, Long organizationId, Long currentSubjectId) {
+        repository.findByOrganizationIdAndName(organizationId, name.trim())
+                .filter(subject -> !subject.getSubjectId().equals(currentSubjectId))
+                .ifPresent(subject -> {
+                    throw ConflictException.duplicate("Subject", "name", name);
+                });
+        repository.findByOrganizationIdAndCode(organizationId, code.trim().toUpperCase())
+                .filter(subject -> !subject.getSubjectId().equals(currentSubjectId))
+                .ifPresent(subject -> {
+                    throw ConflictException.duplicate("Subject", "code", code);
+                });
     }
 }
 

@@ -1,6 +1,7 @@
 package com.wissenup.domain.identity.controller;
 
 import com.wissenup.domain.identity.dto.LoginResponse;
+import com.wissenup.domain.identity.dto.LoginRequest;
 import com.wissenup.domain.identity.dto.OtpRequest;
 import com.wissenup.shared.exception.ValidationException;
 import com.wissenup.domain.identity.service.AuthService;
@@ -29,13 +30,13 @@ public class AuthController {
 
     /**
      * Step 1: Initiate login by sending OTP to email.
-     * POST /api/v1/auth/login?email=user@example.com
+     * POST /api/v1/auth/login
      */
     @PostMapping("/login")
     @Operation(summary = "Initiate login (send OTP)", description = "Sends OTP code to user's email")
     public ResponseEntity<ApiResponse<Void>> initiateLogin(
-            @RequestParam @NotBlank(message = "Email is required") @Email(message = "Valid email is required") String email) {
-        authService.initiateLogin(email);
+            @Valid @RequestBody LoginRequest request) {
+        authService.initiateLogin(request.getEmail(), request.getPassword());
         return ResponseEntity.ok(ApiResponse.success("OTP sent to email. Please verify to complete login."));
     }
 

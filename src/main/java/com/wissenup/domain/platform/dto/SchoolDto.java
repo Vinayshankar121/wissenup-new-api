@@ -18,6 +18,8 @@ public class SchoolDto {
     private Long schoolId;
     private Long organizationId;
     private String name;
+    private String organizationType;
+    private String registrationNumber;
     private String email;
     private String phone;
     private String address;
@@ -39,6 +41,9 @@ public class SchoolDto {
     private String planCode;
     private String planName;
     private BigDecimal monthlyPrice;
+    private BigDecimal yearlyPrice;
+    private Integer planDurationDays;
+    private Integer gracePeriodDays;
     private LocalDateTime subscriptionStart;
     private LocalDateTime subscriptionEnd;
     private LocalDateTime subscriptionTrialEnd;

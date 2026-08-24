@@ -38,10 +38,10 @@ public class SubjectMapper {
 
         return Subject.builder()
                 .organizationId(organizationId)
-                .name(request.getName())
-                .code(request.getCode())
-                .type(Subject.SubjectType.valueOf(request.getType()))
-                .maxMarks(request.getMaxMarks())
+                .name(request.getName().trim())
+                .code(request.getCode().trim().toUpperCase())
+                .type(Subject.SubjectType.CORE)
+                .maxMarks(100)
                 .status(Subject.SubjectStatus.ACTIVE)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -52,10 +52,8 @@ public class SubjectMapper {
             return;
         }
 
-        entity.setName(request.getName());
-        entity.setCode(request.getCode());
-        entity.setType(Subject.SubjectType.valueOf(request.getType()));
-        entity.setMaxMarks(request.getMaxMarks());
+        entity.setName(request.getName().trim());
+        entity.setCode(request.getCode().trim().toUpperCase());
         entity.setUpdatedAt(LocalDateTime.now());
     }
 }

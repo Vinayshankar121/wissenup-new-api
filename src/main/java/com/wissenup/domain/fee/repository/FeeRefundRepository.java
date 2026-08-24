@@ -1,0 +1,1 @@
+package com.wissenup.domain.fee.repository;import com.wissenup.domain.fee.entity.FeeRefund;import org.springframework.data.jpa.repository.JpaRepository;public interface FeeRefundRepository extends JpaRepository<FeeRefund,Long>{}

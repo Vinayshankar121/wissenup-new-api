@@ -1,0 +1,2 @@
+package com.wissenup.domain.communication.dto; import jakarta.validation.constraints.*; import lombok.Data; import java.time.LocalDate;
+@Data public class NoticeRequest { @NotBlank @Size(max=200) private String title; @NotBlank @Size(max=3000) private String description; @NotBlank private String noticeType; @NotNull private LocalDate publishDate; private LocalDate expiryDate; @Size(max=1000) private String attachmentUrl; private String status; }

@@ -1,0 +1,2 @@
+package com.wissenup.domain.timetable.repository; import com.wissenup.domain.timetable.entity.TimetablePeriod; import org.springframework.data.jpa.repository.JpaRepository; import java.util.*;
+public interface TimetablePeriodRepository extends JpaRepository<TimetablePeriod,Long>{List<TimetablePeriod> findAllByOrganizationIdOrderByDisplayOrder(Long org);Optional<TimetablePeriod> findByPeriodIdAndOrganizationId(Long id,Long org);boolean existsByOrganizationIdAndDisplayOrderAndPeriodIdNot(Long org,Integer order,Long id);}

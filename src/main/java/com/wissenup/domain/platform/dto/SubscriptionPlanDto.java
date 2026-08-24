@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -23,6 +24,10 @@ public class SubscriptionPlanDto {
     private Integer maxUsers;
     private Integer storageGb;
     private BigDecimal pricePerMonth;
+    private BigDecimal yearlyPrice;
+    private Integer durationDays;
+    private Integer gracePeriodDays;
     private Integer trialDays;
     private Boolean isActive;
+    private List<Long> moduleIds;
 }

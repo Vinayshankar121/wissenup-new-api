@@ -7,6 +7,7 @@ import com.wissenup.domain.platform.entity.UsageMetric;
 import com.wissenup.domain.platform.repository.SchoolSubscriptionRepository;
 import com.wissenup.domain.platform.repository.SubscriptionPlanRepository;
 import com.wissenup.domain.platform.repository.UsageMetricRepository;
+import com.wissenup.domain.platform.repository.PlanModuleRepository;
 import com.wissenup.domain.platform.service.SubscriptionService;
 import com.wissenup.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final SubscriptionPlanRepository planRepository;
     private final SchoolSubscriptionRepository subscriptionRepository;
     private final UsageMetricRepository usageMetricRepository;
+    private final PlanModuleRepository planModuleRepository;
 
     @Override
     public List<SubscriptionPlanDto> listPlans() {
@@ -132,8 +134,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             .maxUsers(plan.getMax_users())
             .storageGb(plan.getStorage_gb())
             .pricePerMonth(plan.getPrice_per_month())
+            .yearlyPrice(plan.getYearly_price())
+            .durationDays(plan.getDuration_days())
+            .gracePeriodDays(plan.getGrace_period_days())
             .trialDays(plan.getTrial_days())
             .isActive(plan.getIs_active())
+            .moduleIds(planModuleRepository.findAllByPlanId(plan.getPlanId()).stream()
+                .map(planModule -> planModule.getModuleId()).toList())
             .build();
     }
 
@@ -151,6 +158,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         plan.setMax_users(request.getMaxUsers());
         plan.setStorage_gb(request.getStorageGb());
         plan.setPrice_per_month(request.getPricePerMonth());
+        plan.setYearly_price(request.getYearlyPrice());
+        plan.setDuration_days(request.getDurationDays() == null ? 365 : request.getDurationDays());
+        plan.setGrace_period_days(request.getGracePeriodDays() == null ? 7 : request.getGracePeriodDays());
         plan.setTrial_days(request.getTrialDays());
         plan.setIs_active(request.getIsActive() == null || request.getIsActive());
     }

@@ -43,6 +43,16 @@ public class SubscriptionPlan {
 
     private BigDecimal price_per_month;
 
+    private BigDecimal yearly_price;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer duration_days = 365;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer grace_period_days = 7;
+
     private Integer trial_days;  // NULL for non-trial plans, e.g., 30 for TRIAL plan
 
     @Column(nullable = false)

@@ -1,0 +1,2 @@
+package com.wissenup.domain.communication.dto; import jakarta.validation.constraints.*; import lombok.Data; import java.time.LocalDate;
+@Data public class CalendarEventRequest { @NotBlank @Size(max=150) private String title; @Size(max=1000) private String description; @NotBlank private String eventType; @NotNull private LocalDate startDate; private LocalDate endDate; @NotNull private Boolean isHoliday; @Size(max=20) private String colorCode; private String status; }
