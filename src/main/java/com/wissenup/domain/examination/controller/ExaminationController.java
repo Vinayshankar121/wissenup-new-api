@@ -2,6 +2,8 @@ package com.wissenup.domain.examination.controller;
 
 import com.wissenup.shared.exception.ApiResponse;
 import com.wissenup.shared.exception.ResourceNotFoundException;
+import com.wissenup.shared.exception.ConflictException;
+import com.wissenup.shared.exception.ValidationException;
 import com.wissenup.shared.security.SecurityContextUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -29,7 +31,10 @@ public class ExaminationController {
     private Long insert(String sql, Object... params) {
         KeyHolder key=new GeneratedKeyHolder();
         jdbc.update(connection->{PreparedStatement statement=connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);for(int i=0;i<params.length;i++)statement.setObject(i+1,params[i]);return statement;},key);
-        return Objects.requireNonNull(key.getKey()).longValue();
+        if(key.getKeyList().isEmpty())throw new IllegalStateException("Database did not return a generated ID");
+        return key.getKeyList().getFirst().values().stream().filter(Number.class::isInstance)
+                .map(Number.class::cast).findFirst()
+                .orElseThrow(()->new IllegalStateException("Database returned an invalid generated ID")).longValue();
     }
     private Map<String,Object> one(String sql,Object... params) {
         List<Map<String,Object>> rows=jdbc.queryForList(sql,params);if(rows.isEmpty())throw new ResourceNotFoundException("Examination record not found");return rows.getFirst();
@@ -38,9 +43,10 @@ public class ExaminationController {
     @GetMapping("/exam-types")
     public ApiResponse<List<Map<String,Object>>> types(@RequestParam(required=false) Long organizationId,@RequestParam(defaultValue="false") boolean includeInactive){tenant(organizationId);return ApiResponse.success(jdbc.queryForList("select exam_type_id as \"examTypeId\",exam_type_name as \"examTypeName\",description,status from exam_types where organization_id=? "+(includeInactive?"":"and status='ACTIVE' ")+"order by exam_type_name",org()));}
     @PostMapping("/exam-types")
-    public ApiResponse<Map<String,Object>> createType(@RequestBody Map<String,Object>b){Long id=insert("insert into exam_types(organization_id,exam_type_name,description,created_by) values(?,?,?,?)",org(),text(b,"examTypeName"),text(b,"description"),user());return ApiResponse.success("Exam type created",one("select exam_type_id as \"examTypeId\",exam_type_name as \"examTypeName\",description,status from exam_types where organization_id=? and exam_type_id=?",org(),id));}
+    public ApiResponse<Map<String,Object>> createType(@RequestBody Map<String,Object>b){String name=examTypeName(b,null);Long id=insert("insert into exam_types(organization_id,exam_type_name,description,created_by) values(?,?,?,?)",org(),name,text(b,"description"),user());return ApiResponse.success("Exam type created",one("select exam_type_id as \"examTypeId\",exam_type_name as \"examTypeName\",description,status from exam_types where organization_id=? and exam_type_id=?",org(),id));}
     @PutMapping("/exam-types/{id}")
-    public ApiResponse<Map<String,Object>> updateType(@PathVariable Long id,@RequestBody Map<String,Object>b){jdbc.update("update exam_types set exam_type_name=?,description=?,updated_at=current_timestamp,updated_by=? where exam_type_id=? and organization_id=?",text(b,"examTypeName"),text(b,"description"),user(),id,org());return ApiResponse.success("Exam type updated",one("select exam_type_id as \"examTypeId\",exam_type_name as \"examTypeName\",description,status from exam_types where organization_id=? and exam_type_id=?",org(),id));}
+    public ApiResponse<Map<String,Object>> updateType(@PathVariable Long id,@RequestBody Map<String,Object>b){String name=examTypeName(b,id);jdbc.update("update exam_types set exam_type_name=?,description=?,updated_at=current_timestamp,updated_by=? where exam_type_id=? and organization_id=?",name,text(b,"description"),user(),id,org());return ApiResponse.success("Exam type updated",one("select exam_type_id as \"examTypeId\",exam_type_name as \"examTypeName\",description,status from exam_types where organization_id=? and exam_type_id=?",org(),id));}
+    private String examTypeName(Map<String,Object>b,Long excludedId){String name=Optional.ofNullable(text(b,"examTypeName")).map(String::trim).orElse("");if(name.isEmpty())throw new ValidationException("Exam type name is required");if(name.length()>100)throw new ValidationException("Exam type name must not exceed 100 characters");Integer count=excludedId==null?jdbc.queryForObject("select count(*) from exam_types where organization_id=? and lower(exam_type_name)=lower(?)",Integer.class,org(),name):jdbc.queryForObject("select count(*) from exam_types where organization_id=? and lower(exam_type_name)=lower(?) and exam_type_id<>?",Integer.class,org(),name,excludedId);if(count!=null&&count>0)throw new ConflictException("An exam type with this name already exists. Restore the archived type if necessary");return name;}
     @DeleteMapping("/exam-types/{id}") public ApiResponse<Void> archiveType(@PathVariable Long id,@RequestParam(required=false)Long organizationId){tenant(organizationId);jdbc.update("update exam_types set status='INACTIVE',updated_at=current_timestamp,updated_by=? where exam_type_id=? and organization_id=?",user(),id,org());return ApiResponse.success("Exam type archived");}
     @PutMapping("/exam-types/{id}/restore") public ApiResponse<Void> restoreType(@PathVariable Long id,@RequestParam(required=false)Long organizationId){tenant(organizationId);jdbc.update("update exam_types set status='ACTIVE',updated_at=current_timestamp,updated_by=? where exam_type_id=? and organization_id=?",user(),id,org());return ApiResponse.success("Exam type restored");}
 

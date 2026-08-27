@@ -108,6 +108,7 @@ class AcademicYearServiceTest {
     @DisplayName("Should create academic year successfully")
     void testCreateAcademicYear_Success() {
         // Arrange
+        when(repository.findActiveByOrganization(organizationId)).thenReturn(Optional.empty());
         when(mapper.toEntity(createRequest, organizationId)).thenReturn(entity);
         when(repository.save(any(AcademicYear.class))).thenReturn(entity);
         when(mapper.toDto(entity)).thenReturn(dto);
@@ -121,6 +122,32 @@ class AcademicYearServiceTest {
         assertEquals("2024-2025", result.getName());
         assertTrue(result.getIsActive());
         verify(repository, times(1)).save(any(AcademicYear.class));
+    }
+
+    @Test
+    @DisplayName("Should close the current active year before creating a new active year")
+    void testCreateAcademicYear_ClosesCurrentActiveYear() {
+        AcademicYear currentActive = AcademicYear.builder()
+                .academicYearId(2L)
+                .organizationId(organizationId)
+                .name("2023-2024")
+                .isActive(true)
+                .status(AcademicYearStatus.ACTIVE)
+                .build();
+
+        when(repository.findActiveByOrganization(organizationId)).thenReturn(Optional.of(currentActive));
+        when(repository.saveAndFlush(currentActive)).thenReturn(currentActive);
+        when(mapper.toEntity(createRequest, organizationId)).thenReturn(entity);
+        when(repository.save(entity)).thenReturn(entity);
+        when(mapper.toDto(entity)).thenReturn(dto);
+
+        service.createAcademicYear(createRequest, organizationId, userId);
+
+        assertFalse(currentActive.getIsActive());
+        assertEquals(AcademicYearStatus.CLOSED, currentActive.getStatus());
+        assertEquals(userId, currentActive.getUpdatedBy());
+        verify(repository).saveAndFlush(currentActive);
+        verify(repository).save(entity);
     }
 
     @Test

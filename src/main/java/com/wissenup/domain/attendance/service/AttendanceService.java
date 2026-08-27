@@ -8,6 +8,9 @@ import com.wissenup.domain.communication.repository.CalendarEventRepository;
 import com.wissenup.domain.staff.entity.Staff;
 import com.wissenup.domain.staff.repository.*;
 import com.wissenup.domain.student.repository.StudentEnrollmentRepository;
+import com.wissenup.domain.student.repository.ParentRepository;
+import com.wissenup.domain.student.repository.StudentParentRepository;
+import com.wissenup.domain.student.repository.StudentRepository;
 import com.wissenup.shared.exception.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -23,6 +26,7 @@ public class AttendanceService {
  private final StaffSubjectAssignmentRepository subjectAssignments; private final StudentEnrollmentRepository enrollments;
  private final RoleRepository roles;
  private final CalendarEventRepository calendar;
+ private final ParentRepository parents; private final StudentParentRepository studentParents; private final StudentRepository students;
 
  @Transactional(readOnly=true)
  public List<AttendanceSession> search(Long org,Long userId,Long roleId,Long year,Long classId,Long sectionId,LocalDate date,String type){
@@ -72,6 +76,21 @@ public class AttendanceService {
  @Transactional(readOnly=true) public List<StudentAttendance> records(Long id,Long org,Long userId,Long roleId){
   AttendanceSession s=get(id,org);Actor a=actor(org,userId,roleId);if(!canView(a,s))throw new AccessDeniedException("You cannot view this attendance session");
   return records.findAllByOrganizationIdAndAttendanceSessionIdOrderByStudentId(org,id);
+ }
+
+ @Transactional(readOnly=true) public List<StudentAttendance> studentHistory(Long studentId,Long org,Long userId,Long roleId){
+  students.findByStudentIdAndOrganizationId(studentId,org)
+   .orElseThrow(()->ResourceNotFoundException.notFound("Student",studentId));
+  String role=roles.findById(roleId).map(v->v.getCode().toUpperCase()).orElse("");
+  if("PARENT".equals(role)){
+   var parent=parents.findByUserIdAndOrganizationId(userId,org)
+    .orElseThrow(()->new AccessDeniedException("No parent profile is linked to this account"));
+   if(!studentParents.existsByOrganizationIdAndParentIdAndStudentId(org,parent.getParentId(),studentId))
+    throw new AccessDeniedException("You can only view attendance for your linked children");
+  }else if(!Set.of("SCHOOL_ADMIN","SUPER_ADMIN").contains(role)){
+   throw new AccessDeniedException("You cannot view this student's attendance history");
+  }
+  return records.findApprovedHistory(org,studentId);
  }
 
  public AttendanceSession approve(Long id,Long org,Long userId,Long roleId){return action(id,org,userId,roleId,true,null);}

@@ -23,4 +23,6 @@ public interface AcademicYearService {
     void activateAcademicYear(Long academicYearId, Long organizationId, Long userId);
 
     void deactivateAcademicYear(Long academicYearId, Long organizationId, Long userId);
+
+    void copyStructure(Long targetAcademicYearId, Long sourceAcademicYearId, Long organizationId, Long userId);
 }

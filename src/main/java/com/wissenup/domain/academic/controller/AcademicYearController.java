@@ -104,6 +104,17 @@ public class AcademicYearController {
         return ResponseEntity.ok(ApiResponse.success("Academic year deactivated"));
     }
 
+    @PostMapping("/{id}/copy-structure")
+    @Operation(summary = "Copy classes, sections, and subject mappings from another academic year")
+    public ResponseEntity<ApiResponse<Void>> copyStructure(
+            @PathVariable Long id,
+            @RequestParam Long sourceAcademicYearId) {
+        Long organizationId = SecurityContextUtil.getCurrentOrganizationId();
+        Long userId = SecurityContextUtil.getCurrentUserId();
+        service.copyStructure(id, sourceAcademicYearId, organizationId, userId);
+        return ResponseEntity.ok(ApiResponse.success("Academic structure copied"));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete academic year")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {

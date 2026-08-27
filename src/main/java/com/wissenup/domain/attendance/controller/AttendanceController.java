@@ -16,6 +16,7 @@ public class AttendanceController {
  @PutMapping("/sessions/{id}/reject") public ApiResponse<AttendanceSession> reject(@PathVariable Long id,@RequestBody AttendanceActionRequest request){return ApiResponse.success("Attendance rejected",service.reject(id,org(),user(),role(),request.getReason()));}
  @DeleteMapping("/sessions/{id}") public ApiResponse<Void> delete(@PathVariable Long id){service.delete(id,org(),user(),role());return ApiResponse.success("Attendance deleted");}
  @GetMapping("/students/session/{id}") public ApiResponse<List<StudentAttendance>> records(@PathVariable Long id){return ApiResponse.success(service.records(id,org(),user(),role()));}
+ @GetMapping("/students/student/{id}") public ApiResponse<List<StudentAttendance>> studentHistory(@PathVariable Long id){return ApiResponse.success(service.studentHistory(id,org(),user(),role()));}
  @PostMapping("/students/bulk") public ApiResponse<AttendanceSession> createBulk(@Valid @RequestBody BulkAttendanceRequest request){return ApiResponse.success("Attendance saved",service.saveBulk(org(),user(),role(),request));}
  @PutMapping("/students/bulk") public ApiResponse<AttendanceSession> updateBulk(@Valid @RequestBody BulkAttendanceRequest request){return ApiResponse.success("Attendance saved",service.saveBulk(org(),user(),role(),request));}
 }
