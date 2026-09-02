@@ -21,8 +21,7 @@ VALUES (
 ON CONFLICT (code) DO UPDATE
 SET name = EXCLUDED.name,
     description = EXCLUDED.description,
-    is_system_role = TRUE,
-    updated_at = CURRENT_TIMESTAMP;
+    is_system_role = TRUE;
 
 -- ============================================
 -- 2. Insert School-Level Roles
@@ -121,8 +120,7 @@ CROSS JOIN roles r
 WHERE u.email = 'vinaynukala65@gmail.com'
   AND r.code = 'SUPER_ADMIN'
 ON CONFLICT (user_id, role_id) DO UPDATE
-SET status = 'ACTIVE',
-    updated_at = CURRENT_TIMESTAMP;
+SET status = 'ACTIVE';
 
 -- ============================================
 -- 5. Insert Platform Modules
@@ -146,8 +144,7 @@ SET name = EXCLUDED.name,
     description = EXCLUDED.description,
     icon = EXCLUDED.icon,
     display_order = EXCLUDED.display_order,
-    is_active = TRUE,
-    updated_at = CURRENT_TIMESTAMP;
+    is_active = TRUE;
 
 -- ============================================
 -- 6. Insert PREMIUM Subscription Plan
