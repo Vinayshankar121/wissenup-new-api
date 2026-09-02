@@ -39,10 +39,10 @@ import java.util.List;
 @EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
 public class JwtSecurityConfiguration {
 
-    @Value("${app.jwt.secret}")
+    @Value("${JWT_SECRET}")
     private String jwtSecret;
 
-    @Value("${app.jwt.expiry-minutes:60}")
+    @Value("${JWT_EXPIRY_MINUTES:60}")
     private long jwtExpiryMinutes;
 
     /**
