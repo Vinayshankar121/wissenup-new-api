@@ -111,3 +111,8 @@ app:
   otp:
     expiry-minutes: ${OTP_EXPIRY_MINUTES:5}
     max-attempts: ${OTP_MAX_ATTEMPTS:5}
+
+logging:
+  level:
+    org.flywaydb: DEBUG
+    org.springframework.boot.autoconfigure.flyway: DEBUG
