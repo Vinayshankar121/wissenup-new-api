@@ -1,0 +1,113 @@
+# spring:
+#   application:
+#     name: wissenup-backend
+#   profiles:
+#     active: ${SPRING_PROFILE:dev}
+#   datasource:
+#     url: ${DB_URL:jdbc:postgresql://postgres.railway.internal:5432/railway}
+#     username: ${DB_USERNAME:postgres}
+#     password: ${DB_PASSWORD:UZbEKPHNSVYPjARSBfhFXPEGghAnmvnM}
+#     hikari:
+#       maximum-pool-size: ${DB_POOL_SIZE:10}
+#   jpa:
+#     hibernate:
+#       ddl-auto: validate
+#     open-in-view: false
+#   flyway:
+#     enabled: true
+#     baseline-on-migrate: true
+#     baseline-version: 3
+#     locations: classpath:db/migration
+#   mail:
+#     host: ${MAIL_HOST:smtp.gmail.com}
+#     port: ${MAIL_PORT:587}
+#     username: ${MAIL_USERNAME:vinaynukala65@gmail.com}
+#     password: ${MAIL_PASSWORD:snmpiiajdfsgwepg}
+#     properties:
+#       mail:
+#         smtp:
+#           auth: true
+#           starttls:
+#             enable: true
+#             required: true
+#   mvc:
+#     cors:
+#       allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+# server:
+#   port: ${PORT:8082}
+
+# management:
+#   endpoints:
+#     web:
+#       exposure:
+#         include: health,info
+  
+# app:
+#   jwt:
+#     secret: ${JWT_SECRET:7ZzyPXtVJ8UmVVmLFZMk0JJw43N4vIS48BCmLL4VM3w=}
+#     expiry-minutes: ${JWT_EXPIRY_MINUTES:60}
+#   otp:
+#     expiry-minutes: ${OTP_EXPIRY_MINUTES:5}
+#     max-attempts: ${OTP_MAX_ATTEMPTS:5}
+
+
+spring:
+  application:
+    name: wissenup-backend
+
+  profiles:
+    active: ${SPRING_PROFILE:dev}
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 3
+    locations: classpath:db/migration
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+  mvc:
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+server:
+  port: ${PORT:8082}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiry-minutes: ${JWT_EXPIRY_MINUTES:60}
+
+  otp:
+    expiry-minutes: ${OTP_EXPIRY_MINUTES:5}
+    max-attempts: ${OTP_MAX_ATTEMPTS:5}

@@ -34,7 +34,8 @@ application.properties
 application.yml
 application-*.properties
 application-*.yml
-
+# Keep the main application configuration tracked
+!src/main/resources/application.yml
 # Database
 *.sql.bak
 *.db
