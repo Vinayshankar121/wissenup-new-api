@@ -77,7 +77,27 @@ SET
     updated_at = CURRENT_TIMESTAMP;
 
 -- ============================================
--- 3. Insert Super Admin User
+-- 3. Insert Platform Organization
+-- ============================================
+-- SUPER_ADMIN users use organization_id = 0 as the platform-level tenant.
+INSERT INTO organizations (
+    organization_id,
+    name,
+    description,
+    status,
+    created_at
+)
+VALUES (
+    0,
+    'WissenUp Platform',
+    'System organization for platform administrators',
+    'ACTIVE',
+    CURRENT_TIMESTAMP
+)
+ON CONFLICT (organization_id) DO NOTHING;
+
+-- ============================================
+-- 4. Insert Super Admin User
 -- ============================================
 INSERT INTO users (
     organization_id,
@@ -102,7 +122,7 @@ SET organization_id = 0,
     updated_at = CURRENT_TIMESTAMP;
 
 -- ============================================
--- 4. Assign SUPER_ADMIN Role to Super Admin User
+-- 5. Assign SUPER_ADMIN Role to Super Admin User
 -- ============================================
 INSERT INTO user_roles (
     user_id,
@@ -123,7 +143,7 @@ ON CONFLICT (user_id, role_id) DO UPDATE
 SET status = 'ACTIVE';
 
 -- ============================================
--- 5. Insert Platform Modules
+-- 6. Insert Platform Modules
 -- ============================================
 INSERT INTO modules (code, name, description, icon, display_order, is_active, created_at)
 VALUES
@@ -147,7 +167,7 @@ SET name = EXCLUDED.name,
     is_active = TRUE;
 
 -- ============================================
--- 6. Insert PREMIUM Subscription Plan
+-- 7. Insert PREMIUM Subscription Plan
 -- ============================================
 INSERT INTO subscription_plans (
     code, name, description, max_students, max_staff, max_users, storage_gb,
@@ -176,7 +196,7 @@ SET name = EXCLUDED.name,
     updated_at = CURRENT_TIMESTAMP;
 
 -- ============================================
--- 7. Link All Modules to PREMIUM Plan
+-- 8. Link All Modules to PREMIUM Plan
 -- ============================================
 INSERT INTO plan_modules (plan_id, module_id)
 SELECT plan.plan_id, module.module_id
