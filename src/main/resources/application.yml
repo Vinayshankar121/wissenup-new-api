@@ -78,7 +78,7 @@ spring:
     open-in-view: false
 
   flyway:
-    enabled: true
+    enabled: false
     baseline-on-migrate: true
     baseline-version: 3
     locations: classpath:db/migration
