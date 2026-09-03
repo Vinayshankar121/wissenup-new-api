@@ -73,9 +73,10 @@ spring:
       keepalive-time: 30000
 
   jpa:
-    hibernate:
-      ddl-auto: validate
-    open-in-view: false
+    enabled: false
+    # hibernate:
+    #   ddl-auto: validate
+    # open-in-view: false
 
   flyway:
     enabled: false
